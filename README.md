@@ -1,6 +1,17 @@
-# smart-cs-agent
+# 智能客服多能力助手（Smart CS Agent）
 
-智能客服 Agent：多格式文档 RAG + SQLite 业务查询 + 天气 Tool + MCP。
+面向客服/顾问场景的多轮 Agent：知识库问答（RAG）、订单/工单查询、天气与 MCP 外部工具统一调度，并对发信等高危操作做人工确认（HITL）。
+
+## 技术栈
+
+LangChain / LangGraph · RAG（BGE-M3 + Milvus）· FastMCP · SQLite / Postgres Store
+
+## 核心能力
+
+- 意图路由：规则优先 + LLM 补判
+- Tool Calling：本地业务查询 + MCP 工具
+- 会话治理：短期记忆、摘要、可选长期画像
+- 安全：敏感工具 HITL 确认
 
 ## 准备
 
@@ -31,7 +42,6 @@ uv run python -m app.main --no-mcp
 # 重试：模型/工具瞬时失败有限次退避（RETRY_MAX_RETRIES，默认 2；0=关闭）
 # 长期记忆：配置 STORE_POSTGRES_URI 后挂 PostgresStore；姓名跨会话；/clear 只清短期
 ```
-
 
 ## 数据说明
 
