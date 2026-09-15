@@ -1,0 +1,21 @@
+.env
+.venv/
+mcp_server/google_news/
+mcp_server/sentiment_reports/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.idea/
+.vscode/
+*.egg-info/
+dist/
+build/
+uv.lock
+
+# 运行产物
+google_news/
+sentiment_reports/
+llm_outputs/
+*.db
