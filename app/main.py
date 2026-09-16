@@ -102,6 +102,23 @@ def _run_repl(*, enable_mcp: bool, store=None, user_id: str | None = None) -> No
     run_repl(_reply, on_clear=_clear)
 
 
+def _probe_postgres(uri: str, *, timeout_s: int = 5) -> str | None:
+    """快速探测 Postgres；成功返回 None，失败返回原因。
+
+    与 Agent 的 Model/Tool 重试无关：这是启动期基础设施探测，失败即降级短期记忆。
+    """
+    try:
+        import psycopg
+    except ImportError as e:
+        return f"缺少 psycopg: {e}"
+    try:
+        with psycopg.connect(uri, connect_timeout=timeout_s) as conn:
+            conn.execute("SELECT 1")
+        return None
+    except Exception as e:
+        return f"{type(e).__name__}: {e}"
+
+
 def main():
     parser = argparse.ArgumentParser(description="smart-cs-agent 终端多轮对话")
     parser.add_argument(
@@ -115,24 +132,40 @@ def main():
     user_id = (os.getenv("STORE_USER_ID") or "demo-user").strip() or "demo-user"
 
     if not store_uri:
-        print("长期记忆 Store: 未配置 STORE_POSTGRES_URI，仅短期记忆")
+        print("长期记忆 Store: 未配置 STORE_POSTGRES_URI，仅短期记忆", flush=True)
         _run_repl(enable_mcp=not args.no_mcp)
         return
 
     try:
         from langgraph.store.postgres import PostgresStore
     except ImportError as e:
-        print(f"长期记忆 Store: 依赖缺失，降级为仅短期记忆。原因: {e}")
+        print(f"长期记忆 Store: 依赖缺失，降级为仅短期记忆。原因: {e}", flush=True)
+        _run_repl(enable_mcp=not args.no_mcp)
+        return
+
+    print("长期记忆 Store: 正在连接 Postgres…", flush=True)
+    probe_err = _probe_postgres(store_uri, timeout_s=5)
+    if probe_err:
+        print(
+            f"长期记忆 Store: 连接失败，降级为仅短期记忆。原因: {probe_err}",
+            flush=True,
+        )
         _run_repl(enable_mcp=not args.no_mcp)
         return
 
     try:
         with PostgresStore.from_conn_string(store_uri) as store:
             store.setup()
-            print(f"长期记忆 Store: Postgres 已连接；user_id={user_id}")
+            print(
+                f"长期记忆 Store: Postgres 已连接；user_id={user_id}",
+                flush=True,
+            )
             _run_repl(enable_mcp=not args.no_mcp, store=store, user_id=user_id)
     except Exception as e:
-        print(f"长期记忆 Store: 连接失败，降级为仅短期记忆。原因: {e}")
+        print(
+            f"长期记忆 Store: 连接失败，降级为仅短期记忆。原因: {e}",
+            flush=True,
+        )
         _run_repl(enable_mcp=not args.no_mcp)
 
 

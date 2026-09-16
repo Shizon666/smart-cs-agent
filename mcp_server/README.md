@@ -16,7 +16,9 @@
 |------|------|
 | `SERPER_API_KEY` | search_google_news |
 | `DEEPSEEK_API_KEY` / `BASE_URL` / `MODEL` | analyze_sentiment |
-| `SMTP_*` / `EMAIL_*` | send_email_with_attachment |
+| `SMTP_*` / `EMAIL_*` | send_email_with_attachment（`filename` 可选；无则只发正文） |
+
+发信仍走 CLI HITL（`app/hitl.py`）。工具名不变，避免打断 HITL / 评测 `expect_tool`。
 
 ## 产物
 

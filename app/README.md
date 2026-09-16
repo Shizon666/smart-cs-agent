@@ -4,7 +4,7 @@
 
 | 文件 | 职责 |
 |------|------|
-| `main.py` | CLI：终端多轮；`thread_id` + 流式 + `--no-mcp` |
+| `main.py` | CLI：终端多轮；`thread_id` + 流式 + `--no-mcp`；Store 启动探测（超时降级，非 Agent 重试） |
 | `chat.py` | REPL（`/exit` `/help` `/clear`；前缀 `助手:` 后由 reply 流式打正文） |
 | `routing.py` | 意图路由 + 按需检索拼装 |
 | `agent.py` | `create_agent`：Checkpointer + 可选 Store + 摘要 + 重试；MCP 经 HITL |

@@ -119,9 +119,9 @@ async def analyze_sentiment(text: str, filename: str) -> str:
 
 @mcp.tool()
 async def send_email_with_attachment(
-    to: str, subject: str, body: str, filename: str
+    to: str, subject: str, body: str, filename: str = ""
 ) -> str:
-    """发送带附件的邮件；filename 为 sentiment_reports 下的文件名。"""
+    """发送邮件；filename 可选（sentiment_reports 下文件名），有则加附件，无则只发正文。"""
     smtp_server = os.getenv("SMTP_SERVER")
     smtp_port = int(os.getenv("SMTP_PORT", "465"))
     sender_email = os.getenv("EMAIL_USER")
@@ -130,33 +130,39 @@ async def send_email_with_attachment(
     if not all([smtp_server, sender_email, sender_pass]):
         return "❌ 邮件配置不完整，请在仓库根 .env 设置 SMTP_SERVER / EMAIL_USER / EMAIL_PASS"
 
-    full_path = (_REPORT_DIR / filename).resolve()
-    if not full_path.exists():
-        return f"❌ 附件路径无效，未找到文件: {full_path}"
-
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = sender_email
     msg["To"] = to
     msg.set_content(body)
 
-    try:
-        with open(full_path, "rb") as f:
-            file_data = f.read()
+    attach_note = "无附件"
+    name = (filename or "").strip()
+    if name:
+        report_root = _REPORT_DIR.resolve()
+        full_path = (report_root / name).resolve()
+        if not str(full_path).startswith(str(report_root)):
+            return "❌ 附件路径非法（仅允许 sentiment_reports 目录内文件）"
+        if not full_path.exists():
+            return f"❌ 附件路径无效，未找到文件: {full_path}"
+        try:
+            with open(full_path, "rb") as f:
+                file_data = f.read()
             msg.add_attachment(
                 file_data,
                 maintype="application",
                 subtype="octet-stream",
                 filename=full_path.name,
             )
-    except Exception as e:
-        return f"❌ 附件读取失败: {e}"
+            attach_note = f"附件: {full_path.name}"
+        except Exception as e:
+            return f"❌ 附件读取失败: {e}"
 
     try:
         with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
             server.login(sender_email, sender_pass)
             server.send_message(msg)
-        return f"✅ 邮件已成功发送给 {to}，附件路径: {full_path}"
+        return f"✅ 邮件已成功发送给 {to}（{attach_note}）"
     except Exception as e:
         return f"❌ 邮件发送失败: {e}"
 

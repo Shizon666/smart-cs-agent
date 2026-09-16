@@ -20,9 +20,11 @@ KNOWLEDGE_FILE = PROJECT_ROOT / "knowledge" / "knowledge.txt"
 EMBED_MODEL_NAME = "BAAI/bge-m3"
 EMBED_DIM = 1024
 
-CHUNK_SIZE = 200
-CHUNK_OVERLAP = 80
+CHUNK_SIZE = 500
+CHUNK_OVERLAP = 100
 SEPARATORS = [
+    "\n## ",
+    "\n### ",
     "\n==============================\n",
     "\n\n",
     "\n",
@@ -32,4 +34,4 @@ SEPARATORS = [
 ]
 
 DEFAULT_TOP_K = 5
-MIN_SCORE = 0.35
+MIN_SCORE = 0.35  # 语料升级后可用固定题重标定

@@ -34,12 +34,35 @@ def load_and_split():
             f"未找到语料：请准备 {config.KNOWLEDGE_RAW_DIR} 或 {config.KNOWLEDGE_FILE}"
         )
 
+    # 入库可观测：每文件字数（空文档告警）
+    by_file: dict[str, int] = {}
+    for d in documents:
+        name = str(d.metadata.get("filename") or d.metadata.get("source") or "?")
+        n = len(d.page_content or "")
+        by_file[name] = by_file.get(name, 0) + n
+    print("各文件字符数：")
+    for name, n in sorted(by_file.items()):
+        flag = " ⚠空" if n == 0 else ""
+        print(f"  {name}: {n}{flag}")
+
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=config.CHUNK_SIZE,
         chunk_overlap=config.CHUNK_OVERLAP,
         separators=config.SEPARATORS,
     )
-    return splitter.split_documents(documents)
+    chunks = splitter.split_documents(documents)
+
+    chunk_by_file: dict[str, int] = {}
+    for c in chunks:
+        name = str(c.metadata.get("filename") or c.metadata.get("source") or "?")
+        chunk_by_file[name] = chunk_by_file.get(name, 0) + 1
+    print(
+        f"切分参数 chunk_size={config.CHUNK_SIZE} "
+        f"overlap={config.CHUNK_OVERLAP} → 共 {len(chunks)} chunks"
+    )
+    for name, n in sorted(chunk_by_file.items()):
+        print(f"  chunks {name}: {n}")
+    return chunks
 
 
 def ingest_knowledge(*, recreate: bool = False) -> int:
